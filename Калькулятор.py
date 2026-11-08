@@ -1,54 +1,127 @@
-history = []
+import os
 
-while True:
-    print("1. Сложение")
-    print("2. Вычитание")
-    print("3. Умножение")
-    print("4. Деление")
-    print("5. Просмотр истории")
-    print("6. Выход")
+HISTORY_FILE = "calculations.txt"
 
-    choice = input("Введите номер операции: ").strip()
+def calculate(a, operator, b, c=None):
+    """Выполняет операцию. Для оператора '×' нужно третье число c."""
+    if operator == "+":
+        return a + b
+    if operator == "-":
+        return a - b
+    if operator == "*":
+        return a * b
+    if operator == "/":
+        if b == 0:
+            raise ZeroDivisionError("деление на ноль невозможно")
+        return a / b
 
-    if choice == '6':
-        print("До свидания!")
-        break
+    # Новая операция: умножение трёх чисел
+    if operator in ("×", "x", "*3"):
+        if c is None:
+            raise ValueError("для умножения трёх чисел нужно третье число")
+        return a * b * c
 
-    elif choice == '5':
-        if not history:
-            print("История пуста.")
-        else:
-            for i, record in enumerate(history, start=1):
-                print(f"{i}. {record}")
-        continue
+    raise ValueError(f"неизвестная операция: {operator}")
 
-    elif choice in ['1', '2', '3', '4']:
+def needs_third_number(operator):
+    """Проверяет, требует ли оператор третьего числа."""
+    return operator in ("×", "x", "*3")
+
+def save_calculation(expression, result):
+    """Дозаписывает вычисление в файл истории."""
+    with open(HISTORY_FILE, "a", encoding="utf-8") as file:
+        file.write(f"{expression} = {result}\n")
+
+def show_history():
+    """Читает файл calculations.txt и выводит историю вычислений."""
+    if not os.path.exists(HISTORY_FILE):
+        print("\nИстория пуста: файл calculations.txt ещё не создан.")
+        return
+
+    with open(HISTORY_FILE, "r", encoding="utf-8") as file:
+        lines = [line.strip() for line in file if line.strip()]
+
+    if not lines:
+        print("\nИстория пуста: вычислений пока не было.")
+        return
+
+    print("\n" + "=" * 46)
+    print("ИСТОРИЯ ВЫЧИСЛЕНИЙ")
+    print("=" * 46)
+    for number, line in enumerate(lines, start=1):
+        print(f"{number:>3}. {line}")
+    print("=" * 46)
+    print(f"Всего записей: {len(lines)}")
+
+def get_number(prompt):
+    """Запрашивает число, пока пользователь не введёт корректное значение."""
+    while True:
         try:
-            a = float(input("Первое число: "))
-            b = float(input("Второе число: "))
+            return float(input(prompt))
         except ValueError:
-            print("Ошибка: введите число.")
+            print("Ошибка: введите число, например 12 или 3.5")
+
+def main():
+    print("КАЛЬКУЛЯТОР")
+    while True:
+        print("\nМеню:")
+        print("  1 — выполнить вычисление")
+        print("  2 — посмотреть историю")
+        print("  3 — очистить историю")
+        print("  4 — выход")
+
+        choice = input("Выберите пункт: ").strip()
+
+        if choice == "4" or choice.lower() in ("q", "exit", "выход"):
+            print("До встречи!")
+            break
+
+        if choice == "2":
+            show_history()
             continue
 
-        if choice == '1':
-            result = a + b
-            op = '+'
-        elif choice == '2':
-            result = a - b
-            op = '-'
-        elif choice == '3':
-            result = a * b
-            op = '*'
-        else:
-            if b == 0:
-                print("Ошибка: деление на ноль.")
+        if choice == "3":
+            if os.path.exists(HISTORY_FILE):
+                confirmation = input(
+                    "Удалить всю историю вычислений? (да/нет): "
+                ).strip().lower()
+                if confirmation in ("да", "y", "yes"):
+                    os.remove(HISTORY_FILE)
+                    print("История очищена.")
+                else:
+                    print("Отменено.")
+            else:
+                print("История и так пуста.")
+            continue
+
+        if choice == "1":
+            a = get_number("Первое число: ")
+            operator = input(
+                "Операция (+, -, *, / или × для трёх чисел): "
+            ).strip()
+            b = get_number("Второе число: ")
+
+            # Новая кнопка «×»: запрашиваем третье число
+            c = None
+            if needs_third_number(operator):
+                c = get_number("Третье число: ")
+                expression = f"{a:g} × {b:g} × {c:g}"
+            else:
+                expression = f"{a:g} {operator} {b:g}"
+
+            try:
+                result = calculate(a, operator, b, c)
+            except (ZeroDivisionError, ValueError) as error:
+                print(f"Ошибка: {error}")
                 continue
-            result = a / b
-            op = '/'
 
-        record = f"{a} {op} {b} = {result}"
-        history.append(record)
-        print(record)
+            result_text = f"{result:g}"
+            print(f"Результат: {expression} = {result_text}")
+            save_calculation(expression, result_text)
+            print("Вычисление сохранено в calculations.txt")
+            continue
 
-    else:
-        print("Неверный пункт меню.")
+        print("Неизвестный пункт меню. Попробуйте снова.")
+
+if __name__ == "__main__":
+    main()
