@@ -84,4 +84,3 @@ label.pack()
 
 map_button = Button(text="Показать карту", command=show_map)
 map_button.pack()
-
