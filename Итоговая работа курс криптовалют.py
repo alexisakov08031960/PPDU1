@@ -96,7 +96,7 @@ def get_crypto_rate():
 
 root = Tk()
 root.title('Курсы криптовалют')
-root.geometry('400x320')
+root.geometry('460x420')
 root.resizable(False, False)
 
 frame = ttk.Frame(root, padding=12)
